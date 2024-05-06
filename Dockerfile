@@ -1,12 +1,14 @@
-FROM golang:1.16-alpine
+FROM golang:1.21-alpine
 
 WORKDIR /app
 
-COPY /device-collector/go.mod ./
+COPY go.mod ./
 RUN go mod download
 
-COPY /device-collector/config/ ./
+COPY config/ ./
 COPY *.go ./
+
+RUN go mod tidy
 
 RUN go build -o /device-collector
 
