@@ -1,6 +1,6 @@
 package main
 
-import "device-collector/config"
+import "github.com/amanasmuei/device-collector.git/config"
 
 func main() {
 	// Initialize broker
