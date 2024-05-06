@@ -1,11 +1,11 @@
-module device-collector
+module github.com/amanasmuei/device-collector.git
 
-go 1.21
+go 1.21.1
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/gorm v1.25.9
+	gorm.io/gorm v1.25.10
 )
 
 require (
