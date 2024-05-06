@@ -4,6 +4,15 @@ FROM golang:latest
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
+# Set the timezone as an environment variable
+ENV TZ=America/Kuala_Lumpur
+
+# Install the tzdata package (specific to Debian/Ubuntu-based images)
+RUN apt-get update && apt-get install -y tzdata
+
+# Set the timezone
+RUN ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Copy go mod and sum files
 COPY go.mod go.sum ./
 
