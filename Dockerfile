@@ -1,17 +1,23 @@
-FROM golang:1.21-alpine
+# Start from the official golang image
+FROM golang:latest
 
+# Set the Current Working Directory inside the container
 WORKDIR /app
 
-COPY go.mod ./
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+
+# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-COPY config/ ./
-COPY *.go ./
+# Copy the source code from the current directory to the Working Directory inside the container
+COPY . .
 
-RUN go mod tidy
+# Build the Go app
+RUN go build -o main .
 
-RUN go build -o /device-collector
-
+# This container exposes port 8080 to the outside world
 EXPOSE 8080
 
-CMD [ "/device-collector" ]
+# Command to run the executable
+CMD ["./main"]
