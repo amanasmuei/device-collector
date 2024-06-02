@@ -1,13 +1,23 @@
 package main
 
-import "github.com/amanasmuei/device-collector.git/config"
+import (
+	"log"
+
+	"github.com/amanasmuei/device-collector.git/config"
+)
 
 func main() {
 	// Initialize broker
-	config.ConnectBroker()
+	err := config.ConnectBroker()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
 	// Initialize database
-	config.ConnectMariaDb()
+	err = config.ConnectMariaDb()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
 	// Start the MQTT client in a separate goroutine
 	config.StartMQTTListener()

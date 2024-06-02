@@ -3,6 +3,7 @@ package config
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -14,7 +15,7 @@ var DbSql *sql.DB
 
 func ConnectMariaDb() error {
 
-	var DATABASE_URI string = "host=49.236.203.211 user=postgres password=Otta2024! dbname=postgres port=5432 sslmode=disable"
+	var DATABASE_URI string = "host=timescaledb user=postgres password=Otta2024! dbname=postgres port=5432 sslmode=disable"
 
 	var err error
 
@@ -25,7 +26,7 @@ func ConnectMariaDb() error {
 	})
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Set the default schema to 'Iot'
@@ -33,7 +34,11 @@ func ConnectMariaDb() error {
 	DB.Debug().Table("public.").Session(&gorm.Session{})
 
 	// Create db object
-	DbSql, _ = DB.DB()
+	DbSql, err = DB.DB()
+	if err != nil {
+		log.Fatalf("Error getting database instance: %v", err)
+		return err
+	}
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
 	DbSql.SetMaxIdleConns(10)

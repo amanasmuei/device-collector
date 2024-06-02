@@ -15,25 +15,35 @@ var MqttClient mqtt.Client
 
 func ConnectBroker() error {
 
+	// const (
+	// 	MQTTBroker     = "tcp://49.236.203.211:1883"
+	// 	MQTTTopic      = "node_data"
+	// 	MQTTClientID   = "collector"
+	// 	MQTTUsername   = "broker"
+	// 	MQTTPassword   = "Ottabroker2024!"
+	// 	MQTTStatusPath = "status"
+	// 	MQTTDataPath   = "data"
+	// )
+
 	const (
-		MQTTBroker     = "tcp://49.236.203.211:1883"
-		MQTTTopic      = "node_data"
-		MQTTClientID   = "collector"
-		MQTTUsername   = "broker"
-		MQTTPassword   = "Ottabroker2024!"
-		MQTTStatusPath = "status"
-		MQTTDataPath   = "data"
+		MQTTBroker   = "tcp://broker:1883"
+		MQTTTopic    = "node_data"
+		MQTTClientID = "device-collector"
+		// MQTTUsername   = "broker"
+		// MQTTPassword   = "Ottabroker2024!"
+		// MQTTStatusPath = "status"
+		// MQTTDataPath   = "data"
 	)
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(MQTTBroker)
 	opts.SetClientID(MQTTClientID)
-	opts.SetUsername(MQTTUsername)
-	opts.SetPassword(MQTTPassword)
+	// opts.SetUsername(MQTTUsername)
+	// opts.SetPassword(MQTTPassword)
 
 	MqttClient = mqtt.NewClient(opts)
 	if token := MqttClient.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
+		return token.Error()
 	}
 
 	return nil
@@ -62,10 +72,9 @@ func onStatusMessageReceived(client mqtt.Client, message mqtt.Message) {
 
 	// Add created_at field with current timestamp in desired format
 	createdAt := time.Now().Format("2006-01-02 15:04:05")
-	updatedAt := createdAt
 
 	// Prepare the SQL INSERT statement
-	stmt, err := DbSql.Prepare("INSERT INTO data_status (node_id, raw_data, created_at, updated_at) VALUES ($1, $2, $3, $4)")
+	stmt, err := DbSql.Prepare("INSERT INTO data_status (node_id, raw_data, time) VALUES ($1, $2, $3)")
 	if err != nil {
 		log.Println("Error preparing SQL statement:", err)
 		return
@@ -73,14 +82,14 @@ func onStatusMessageReceived(client mqtt.Client, message mqtt.Message) {
 	defer stmt.Close()
 
 	// Convert the MQTTMessage struct to JSON
-	rawJSON, err := json.Marshal(msg)
+	rawStatusJSON, err := json.Marshal(msg)
 	if err != nil {
 		log.Println("Error marshaling JSON:", err)
 		return
 	}
 
 	// Execute the SQL INSERT statement
-	_, err = stmt.Exec(msg.NodeName, rawJSON, createdAt, updatedAt)
+	_, err = stmt.Exec(msg.NodeName, rawStatusJSON, createdAt)
 	if err != nil {
 		log.Println("Error executing SQL statement:", err)
 		return
@@ -127,10 +136,9 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 
 	// Add created_at field with current timestamp in desired format
 	createdAt := time.Now().Format("2006-01-02 15:04:05")
-	updatedAt := createdAt
 
 	// Prepare the SQL INSERT statement for data_raw
-	stmt, err := DbSql.Prepare("INSERT INTO data_raw (node_id, raw_data, created_at, updated_at) VALUES ($1, $2, $3, $4)")
+	stmt, err := DbSql.Prepare("INSERT INTO data_raw (node_id, raw_data, time) VALUES ($1, $2, $3)")
 	if err != nil {
 		log.Println("Error preparing SQL statement:", err)
 		return
@@ -146,7 +154,7 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	}
 
 	// Execute the SQL INSERT statement for data_raw
-	if _, err := stmt.Exec(nodeName, rawJSON, createdAt, updatedAt); err != nil {
+	if _, err := stmt.Exec(nodeName, rawJSON, createdAt); err != nil {
 		log.Println("Error executing SQL statement:", err)
 		return
 	}
@@ -169,7 +177,7 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 
 	if prevData.PreviousStatus1 != msg.StatusSensor1 {
 		// Prepare and execute SQL INSERT statements for sensor data (assuming StatusSensor1 and StatusSensor2 are string fields)
-		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.StatusSensor1, createdAt, updatedAt); err != nil {
+		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.StatusSensor1, createdAt); err != nil {
 			log.Println("Error inserting sensor data:", err)
 			return
 		}
@@ -178,7 +186,7 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 
 	if prevData.PreviousStatus2 != msg.StatusSensor2 {
 		// Prepare and execute SQL INSERT statements for sensor data (assuming StatusSensor1 and StatusSensor2 are string fields)
-		if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.StatusSensor2, createdAt, updatedAt); err != nil {
+		if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.StatusSensor2, createdAt); err != nil {
 			log.Println("Error inserting sensor data:", err)
 			return
 		}
@@ -200,14 +208,14 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 }
 
 // Function to insert sensor data into the specified table
-func insertSensorData(db *sql.DB, tableName, nodeName string, data int, createdAt, updatedAt string) error {
-	stmt, err := db.Prepare(fmt.Sprintf("INSERT INTO %s (node_id, data, created_at, updated_at) VALUES ($1, $2, $3, $4)", tableName))
+func insertSensorData(db *sql.DB, tableName, nodeName string, data int, createdAt string) error {
+	stmt, err := db.Prepare(fmt.Sprintf("INSERT INTO %s (node_id, data, time) VALUES ($1, $2, $3)", tableName))
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.Exec(nodeName, data, createdAt, updatedAt); err != nil {
+	if _, err := stmt.Exec(nodeName, data, createdAt); err != nil {
 		return err
 	}
 
