@@ -60,8 +60,8 @@ type MQTTStatusMessage struct {
 }
 
 func onStatusMessageReceived(client mqtt.Client, message mqtt.Message) {
-	fmt.Printf("Received status message on topic: %s\n", message.Topic())
-	fmt.Printf("Message status payload: %s\n", message.Payload())
+	// fmt.Printf("Received status message on topic: %s\n", message.Topic())
+	// fmt.Printf("Message status payload: %s\n", message.Payload())
 
 	// Parse the JSON payload into MQTTMessage struct
 	var msg MQTTStatusMessage
