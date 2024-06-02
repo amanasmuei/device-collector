@@ -112,8 +112,8 @@ type MQTTDataMessage struct {
 var previousDataMap map[string]*PreviousData
 
 func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
-	fmt.Printf("Received data message on topic: %s\n", message.Topic())
-	fmt.Printf("Message data payload: %s\n", message.Payload())
+	//fmt.Printf("Received data message on topic: %s\n", message.Topic())
+	//fmt.Printf("Message data payload: %s\n", message.Payload())
 
 	// Split the message using "/" as the separator
 	parts := strings.Split(message.Topic(), "/")
