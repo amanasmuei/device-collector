@@ -5,7 +5,7 @@ FROM golang:latest
 WORKDIR /app
 
 # Set the timezone as an environment variable
-ENV TZ=America/Kuala_Lumpur
+ENV TZ=Asia/Kuala_Lumpur
 
 # Install the tzdata package (specific to Debian/Ubuntu-based images)
 RUN apt-get update && apt-get install -y tzdata
