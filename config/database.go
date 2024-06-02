@@ -41,13 +41,13 @@ func ConnectMariaDb() error {
 	}
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	DbSql.SetMaxIdleConns(10)
+	DbSql.SetMaxIdleConns(100)
 
 	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	DbSql.SetMaxOpenConns(100)
+	DbSql.SetMaxOpenConns(1000)
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	DbSql.SetConnMaxLifetime(time.Hour)
+	DbSql.SetConnMaxLifetime(time.Minute)
 
 	return nil
 }
