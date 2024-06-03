@@ -137,27 +137,27 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	// Add created_at field with current timestamp in desired format
 	createdAt := time.Now().Format("2006-01-02 15:04:05")
 
-	// Prepare the SQL INSERT statement for data_raw
-	stmt, err := DbSql.Prepare("INSERT INTO data_raw (node_id, raw_data, time) VALUES ($1, $2, $3)")
-	if err != nil {
-		log.Println("Error preparing SQL statement:", err)
-		return
-	}
-	defer stmt.Close()
+	// // Prepare the SQL INSERT statement for data_raw
+	// stmt, err := DbSql.Prepare("INSERT INTO data_raw (node_id, raw_data, time) VALUES ($1, $2, $3)")
+	// if err != nil {
+	// 	log.Println("Error preparing SQL statement:", err)
+	// 	return
+	// }
+	// defer stmt.Close()
 
-	msg.TimeData = time.Now().Format("2006-01-02 15:04:05")
-	// Convert the MQTTDataMessage struct to JSON
-	rawJSON, err := json.Marshal(msg)
-	if err != nil {
-		log.Println("Error marshaling JSON:", err)
-		return
-	}
+	// msg.TimeData = time.Now().Format("2006-01-02 15:04:05")
+	// // Convert the MQTTDataMessage struct to JSON
+	// rawJSON, err := json.Marshal(msg)
+	// if err != nil {
+	// 	log.Println("Error marshaling JSON:", err)
+	// 	return
+	// }
 
-	// Execute the SQL INSERT statement for data_raw
-	if _, err := stmt.Exec(nodeName, rawJSON, createdAt); err != nil {
-		log.Println("Error executing SQL statement:", err)
-		return
-	}
+	// // Execute the SQL INSERT statement for data_raw
+	// if _, err := stmt.Exec(nodeName, rawJSON, createdAt); err != nil {
+	// 	log.Println("Error executing SQL statement:", err)
+	// 	return
+	// }
 
 	// Initialize previousDataMap if it's nil
 	if previousDataMap == nil {
@@ -224,11 +224,11 @@ func insertSensorData(db *sql.DB, tableName, nodeName string, data int, createdA
 
 func StartMQTTListener() {
 
-	// Subscribe to MQTT topic
-	statusTopic := fmt.Sprintf("%s/+/status/#", "node_data")
-	if token := MqttClient.Subscribe(statusTopic, 0, onStatusMessageReceived); token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
-	}
+	// // Subscribe to MQTT topic
+	// statusTopic := fmt.Sprintf("%s/+/status/#", "node_data")
+	// if token := MqttClient.Subscribe(statusTopic, 0, onStatusMessageReceived); token.Wait() && token.Error() != nil {
+	// 	log.Fatal(token.Error())
+	// }
 
 	// Subscribe to MQTT topic
 	dataTopic := fmt.Sprintf("%s/+/data/#", "node_data")
