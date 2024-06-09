@@ -102,11 +102,17 @@ type PreviousData struct {
 	PreviousStatus2 int
 }
 
+// type MQTTDataMessage struct {
+// 	TimeData      string `json:"time_data"`
+// 	StatusSensor1 int    `json:"status_sensor_1"`
+// 	StatusSensor2 int    `json:"status_sensor_2"`
+// 	StatusMachine int    `json:"status_machine"`
+// }
+
 type MQTTDataMessage struct {
-	TimeData      string `json:"time_data"`
-	StatusSensor1 int    `json:"status_sensor_1"`
-	StatusSensor2 int    `json:"status_sensor_2"`
-	StatusMachine int    `json:"status_machine"`
+	TimeData string `json:"time_data"`
+	Sensor   int    `json:"sensor"`
+	State    int    `json:"state"`
 }
 
 var previousDataMap map[string]*PreviousData
@@ -137,74 +143,20 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	// Add created_at field with current timestamp in desired format
 	createdAt := time.Now().Format("2006-01-02 15:04:05")
 
-	// // Prepare the SQL INSERT statement for data_raw
-	// stmt, err := DbSql.Prepare("INSERT INTO data_raw (node_id, raw_data, time) VALUES ($1, $2, $3)")
-	// if err != nil {
-	// 	log.Println("Error preparing SQL statement:", err)
-	// 	return
-	// }
-	// defer stmt.Close()
-
-	// msg.TimeData = time.Now().Format("2006-01-02 15:04:05")
-	// // Convert the MQTTDataMessage struct to JSON
-	// rawJSON, err := json.Marshal(msg)
-	// if err != nil {
-	// 	log.Println("Error marshaling JSON:", err)
-	// 	return
-	// }
-
-	// // Execute the SQL INSERT statement for data_raw
-	// if _, err := stmt.Exec(nodeName, rawJSON, createdAt); err != nil {
-	// 	log.Println("Error executing SQL statement:", err)
-	// 	return
-	// }
-
-	// Initialize previousDataMap if it's nil
-	if previousDataMap == nil {
-		previousDataMap = make(map[string]*PreviousData)
-	}
-
-	// Check if previous data exists in the cache
-	prevData, ok := previousDataMap[nodeName]
-	if !ok {
-		prevData = &PreviousData{
-			NodeName:        nodeName,
-			PreviousStatus1: msg.StatusSensor1,
-			PreviousStatus2: msg.StatusSensor2,
-		}
-		previousDataMap[nodeName] = prevData
-	}
-
-	if prevData.PreviousStatus1 != msg.StatusSensor1 {
-		// Prepare and execute SQL INSERT statements for sensor data (assuming StatusSensor1 and StatusSensor2 are string fields)
-		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.StatusSensor1, createdAt); err != nil {
+	if msg.Sensor == 1 {
+		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.State, createdAt); err != nil {
 			log.Println("Error inserting sensor data:", err)
 			return
 		}
-		prevData.PreviousStatus1 = msg.StatusSensor1
 	}
 
-	if prevData.PreviousStatus2 != msg.StatusSensor2 {
-		// Prepare and execute SQL INSERT statements for sensor data (assuming StatusSensor1 and StatusSensor2 are string fields)
-		if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.StatusSensor2, createdAt); err != nil {
+	if msg.Sensor == 2 {
+		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.State, createdAt); err != nil {
 			log.Println("Error inserting sensor data:", err)
 			return
 		}
-		prevData.PreviousStatus2 = msg.StatusSensor2
 	}
 
-	// Update the cache
-	previousDataMap[nodeName] = prevData
-
-	// if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.StatusSensor1, createdAt, updatedAt); err != nil {
-	// 	log.Println("Error inserting sensor data:", err)
-	// 	return
-	// }
-
-	// if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.StatusSensor2, createdAt, updatedAt); err != nil {
-	// 	log.Println("Error inserting sensor data:", err)
-	// 	return
-	// }
 }
 
 // Function to insert sensor data into the specified table
