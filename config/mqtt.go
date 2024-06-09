@@ -151,7 +151,7 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	}
 
 	if msg.Sensor == 2 {
-		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.State, createdAt); err != nil {
+		if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.State, createdAt); err != nil {
 			log.Println("Error inserting sensor data:", err)
 			return
 		}
