@@ -57,6 +57,8 @@ type MQTTStatusMessage struct {
 	NodeName    string `json:"node_name"`
 	Temperature string `json:"temperature"`
 	Humidity    string `json:"humidity"`
+	Altitude    string `json:"altitude"`
+	Pressure    string `json:"pressure"`
 }
 
 func onStatusMessageReceived(client mqtt.Client, message mqtt.Message) {
