@@ -115,8 +115,6 @@ type MQTTDataMessage struct {
 	State    int    `json:"state"`
 }
 
-var previousDataMap map[string]*PreviousData
-
 func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	//fmt.Printf("Received data message on topic: %s\n", message.Topic())
 	//fmt.Printf("Message data payload: %s\n", message.Payload())
@@ -176,11 +174,11 @@ func insertSensorData(db *sql.DB, tableName, nodeName string, data int, createdA
 
 func StartMQTTListener() {
 
-	// // Subscribe to MQTT topic
-	// statusTopic := fmt.Sprintf("%s/+/status/#", "node_data")
-	// if token := MqttClient.Subscribe(statusTopic, 0, onStatusMessageReceived); token.Wait() && token.Error() != nil {
-	// 	log.Fatal(token.Error())
-	// }
+	// Subscribe to MQTT topic
+	statusTopic := fmt.Sprintf("%s/+/status/#", "node_data")
+	if token := MqttClient.Subscribe(statusTopic, 0, onStatusMessageReceived); token.Wait() && token.Error() != nil {
+		log.Fatal(token.Error())
+	}
 
 	// Subscribe to MQTT topic
 	dataTopic := fmt.Sprintf("%s/+/data/#", "node_data")
