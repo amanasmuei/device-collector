@@ -117,10 +117,9 @@ type MQTTDataMessage struct {
 	State    int    `json:"state"`
 }
 
-func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
-	//fmt.Printf("Received data message on topic: %s\n", message.Topic())
-	//fmt.Printf("Message data payload: %s\n", message.Payload())
+var lastKnownStates = make(map[string]map[int]int)
 
+func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	// Split the message using "/" as the separator
 	parts := strings.Split(message.Topic(), "/")
 
@@ -133,6 +132,8 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 		return
 	}
 
+	fmt.Printf("Node name: %s, Received data message on topic: %s\n", nodeName, message.Payload())
+
 	// Parse the JSON payload into MQTTDataMessage struct
 	var msg MQTTDataMessage
 	if err := json.Unmarshal(message.Payload(), &msg); err != nil {
@@ -143,19 +144,45 @@ func onDataMessageReceived(client mqtt.Client, message mqtt.Message) {
 	// Add created_at field with current timestamp in desired format
 	createdAt := time.Now().Format("2006-01-02 15:04:05")
 
-	if msg.Sensor == 1 {
-		if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.State, createdAt); err != nil {
-			log.Println("Error inserting sensor data:", err)
-			return
+	// Initialize last known state for the node if not present
+	if _, exists := lastKnownStates[nodeName]; !exists {
+		lastKnownStates[nodeName] = make(map[int]int)
+	}
+
+	// Check if the state has changed before inserting into the database
+	if lastKnownStates[nodeName][msg.Sensor] != msg.State {
+		lastKnownStates[nodeName][msg.Sensor] = msg.State
+
+		fmt.Printf("Node name: %s, Insert data message on topic: %s\n", nodeName, message.Payload())
+
+		if msg.Sensor == 1 {
+			if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.State, createdAt); err != nil {
+				log.Println("Error inserting sensor data:", err)
+				return
+			}
+		}
+
+		if msg.Sensor == 2 {
+			if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.State, createdAt); err != nil {
+				log.Println("Error inserting sensor data:", err)
+				return
+			}
 		}
 	}
 
-	if msg.Sensor == 2 {
-		if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.State, createdAt); err != nil {
-			log.Println("Error inserting sensor data:", err)
-			return
-		}
-	}
+	// if msg.Sensor == 1 {
+	// 	if err := insertSensorData(DbSql, "data_sensor_1", nodeName, msg.State, createdAt); err != nil {
+	// 		log.Println("Error inserting sensor data:", err)
+	// 		return
+	// 	}
+	// }
+
+	// if msg.Sensor == 2 {
+	// 	if err := insertSensorData(DbSql, "data_sensor_2", nodeName, msg.State, createdAt); err != nil {
+	// 		log.Println("Error inserting sensor data:", err)
+	// 		return
+	// 	}
+	// }
 
 }
 
@@ -184,7 +211,7 @@ func StartMQTTListener() {
 
 	// Subscribe to MQTT topic
 	dataTopic := fmt.Sprintf("%s/+/data/#", "node_data")
-	if token := MqttClient.Subscribe(dataTopic, 0, onDataMessageReceived); token.Wait() && token.Error() != nil {
+	if token := MqttClient.Subscribe(dataTopic, 1, onDataMessageReceived); token.Wait() && token.Error() != nil {
 		log.Fatal(token.Error())
 	}
 
